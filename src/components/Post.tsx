@@ -8,7 +8,6 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { FaShare, FaComment, FaHeart, FaRegFileAudio, FaSpinner } from 'react-icons/fa';
-import api from '../service/api';
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -29,7 +28,7 @@ export default function Post ({ date, content, imageSrc }: PostProps) {
   const handleDescriptionImage = async () => {
     try {
       setLoading(true);
-      const response = await api.post("object_detection", {
+      const response = await axios.post("https://api.jigsawstack.com/v1/ai/object_detection", {
         url: imageSrc
       }, {
         headers: {
@@ -47,7 +46,7 @@ export default function Post ({ date, content, imageSrc }: PostProps) {
             "initial_value": words
           }
         ], 
-        "return_prompt": "Return the result in a string format"
+        "return_prompt": "Return just the result in a string format"
       }, {
         headers: {
           "x-api-key": PROMPT_API_TOKEN
