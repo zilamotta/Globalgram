@@ -1,29 +1,45 @@
-import { Button, Flex, IconButton, Text, Textarea } from '@chakra-ui/react'
+import { Button, Flex, IconButton, Menu, MenuButton, MenuItem, MenuList, Select, Text, Textarea } from '@chakra-ui/react'
 import { useRef, useState } from "react";
 import { AudioRecorder } from 'react-audio-voice-recorder';
 import * as Bytescale from "@bytescale/sdk";
 import axios from 'axios';
-import { FaFileImage } from 'react-icons/fa';
+import { FaFileImage, FaLanguage } from 'react-icons/fa';
+import FullScreenLoader from './FullScreenLoader';
 
 
 export default function InputContent() {
     const [expanded, setExpanded] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState('');
+    const [currentLanguage, setCurrentLanguage] = useState('en');
     const TRANSCRIBE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_TRANSCRIBE_API_TOKEN;
+    const TRANSLATE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_TRANSLATE_API_TOKEN;
+    
+    console.log("TRANSLATE_API_TOKEN", TRANSLATE_API_TOKEN);
 
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     const getAudioTranslated = async (fileUrl: string) => {
+        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+        const apiUrl = 'https://api.jigsawstack.com/v1/ai/transcribe';
         try {
-            const response = await axios.post("https://api.jigsawstack.com/v1/ai/transcribe", 
+            const response = await axios.post(`${corsProxy}${apiUrl}`, 
                 {
                     url: fileUrl
                 }, 
                 {
                     headers: {
+                    'Content-Type': 'application/json',
                     "x-api-key": TRANSCRIBE_API_TOKEN
                 },
             });
-            console.log("response", response)
+
+            const { data } = response;
+            const transcriptedText = data.text;
+            if(textAreaRef && textAreaRef.current) {
+                textAreaRef.current.value = transcriptedText;
+            }
+            
         } catch(e){
             console.log("error", e)
         }
@@ -36,13 +52,54 @@ export default function InputContent() {
 
         try {
             const { fileUrl } = await uploadManager.upload({ data: file });
-            getAudioTranslated(fileUrl);
+            return fileUrl;
         } catch (e: any) {
             alert(`Error:\n${e.message}`);
+            return null;
+        }
+    }
+
+    const handleTranscrible = async (file: any) => {
+        setLoadingText('Transcribing audio...');
+        setLoading(true);
+        const url = await uploadAudio(file)
+        if(url) {
+            await getAudioTranslated(url);
+        }
+        setLoading(false)
+    }
+
+    const translateTo = async (language: string) => {
+        setCurrentLanguage(language);
+        try {
+            setLoadingText('Translating text...');
+            setLoading(true);
+            const response = await axios.post("https://api.jigsawstack.com/v1/ai/translate", 
+                {
+                    current_language: currentLanguage,
+                    target_language: language,
+                    text: textAreaRef?.current?.value ? textAreaRef.current.value : '',
+                }, 
+                {
+                    headers: {
+                    'Content-Type': 'application/json',
+                    "x-api-key": TRANSLATE_API_TOKEN
+                    },
+                }
+            );
+            const { data } = response
+            if(textAreaRef.current) {
+                textAreaRef.current.value = data.translated_text;
+            }
+        } catch(e) {
+            console.log("error", e);
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
+        <>
         <Flex justifyContent="center" alignItems="center" flexDir="column">
             <Textarea
                 placeholder="       What are you thinking about?..."
@@ -55,7 +112,7 @@ export default function InputContent() {
             />
                 <Flex gap={2}>
                     <AudioRecorder 
-                        onRecordingComplete={uploadAudio}
+                        onRecordingComplete={handleTranscrible}
                         audioTrackConstraints={{
                             noiseSuppression: true,
                             echoCancellation: true,
@@ -63,7 +120,39 @@ export default function InputContent() {
                         downloadOnSavePress={false}
                         downloadFileExtension="webm"
                     />
-                    <IconButton
+                    <Menu>
+                        <MenuButton> 
+                            <IconButton
+                                aria-label="Search button"
+                                icon={<FaLanguage fontSize={22} color="black" />}
+                                variant="ghost"
+                            />
+                        </MenuButton>
+                        <MenuList>
+                            {
+                                [
+                                    {lang: "Português", acronym: "br"}, 
+                                    {lang: "Inglês", acronym: "en"}, 
+                                    {lang: "Italiano", acronym: "it"},
+                                    {lang: "Alemão", acronym: "de"},
+                                    {lang: "Espanhol", acronym: "es"},
+                                    {lang: "Francês", acronym: "fr"},
+                                    ].map(
+                                    (language: any, index) => (
+                                        <MenuItem key={index} onClick={() => translateTo(language.acronym)}>{language.lang}</MenuItem>
+                                    )
+                                )
+                            }
+                        </MenuList>
+                    </Menu>
+                    {/* <IconButton
+                        aria-label="Upload img"
+                        icon={ <FaLanguage fontSize={22} color='black' />}
+                        variant="ghost"
+                        onClick={() => setShowBottomSelect(true)}
+                    /> */}
+                    
+                    {/* <IconButton
                         aria-label="Upload img"
                         icon={ <FaFileImage fontSize={14} color='black' />}
                         variant="ghost"
@@ -71,8 +160,10 @@ export default function InputContent() {
                     />
                     <Button w={20} h={10} colorScheme="blue">
                         <Text>Publicar</Text>
-                    </Button>
+                    </Button> */}
                 </Flex>
         </Flex>
+        { loading && <FullScreenLoader loadingText={loadingText} /> }
+        </>
     )
 }
