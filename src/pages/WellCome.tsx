@@ -10,11 +10,8 @@ export default function WellCome() {
           <Heading as="h1" size="lg" textAlign="center" mb={4}>
             Welcome to GlobalGram
           </Heading>
-          <Text fontSize="lg" mb={6}>
-            Speak to the world, one caption at a time!
-          </Text>
           <Text mb={4}>
-            GlobalGram is your gateway to creating captivating, multilingual captions for all your social media platforms. Break language barriers and connect with a global audience effortlessly for free.
+            Break language barriers and connect with a global audience effortlessly for free.
           </Text>
           
           <Heading as="h2" size="md" mt={6} mb={4}>
@@ -23,15 +20,15 @@ export default function WellCome() {
           <List spacing={3} mb={6}>
             <ListItem>
               <ListIcon as={FaGlobe} color="green.500" />
-              Multilingual Magic: Craft captions in multiple languages with just a few clicks
+              Craft captions in multiple languages with just a few clicks
             </ListItem>
             <ListItem>
               <ListIcon as={FaGlobeAmericas} color="green.500" />
-              Expand Your Reach: Connect with audiences across different cultures and languages
+              Connect with audiences across different cultures and languages
             </ListItem>
             <ListItem>
               <ListIcon as={FaClock} color="green.500" />
-              Time-Saving: Create diverse language captions faster than ever before
+              Create diverse language captions faster than ever before
             </ListItem>
           </List>
     
@@ -39,10 +36,10 @@ export default function WellCome() {
             How it works?
           </Heading>
           <List spacing={3} mb={6}>
-            <ListItem>1. Create Your Caption: Type your caption or record your voice to automatically generate the caption</ListItem>
-            <ListItem>2. Choose Languages: Select the languages you want to translate into</ListItem>
-            <ListItem>3. Generate & Customize: Our AI generates translations, which you can then fine-tune</ListItem>
-            <ListItem>4. Post and Connect: Share your multilingual captions across your social media accounts</ListItem>
+            <ListItem>1. Type your caption or or record your voice to automatically generate the caption</ListItem>
+            <ListItem>2. Select the languages you want to translate into</ListItem>
+            <ListItem>3. ⁠Our AI generates translations, which you can then fine-tune</ListItem>
+            <ListItem>4. Share your multilingual captions across your social media accounts</ListItem>
           </List>
     
           <Heading as="h2" size="md" mt={6} mb={4}>

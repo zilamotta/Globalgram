@@ -3,19 +3,19 @@ import { useRef, useState } from "react";
 import { AudioRecorder } from 'react-audio-voice-recorder';
 import * as Bytescale from "@bytescale/sdk";
 import axios from 'axios';
-import { FaFileImage, FaLanguage } from 'react-icons/fa';
+import { FaLanguage } from 'react-icons/fa';
 import FullScreenLoader from './FullScreenLoader';
+import UploadInput from './UploadInput';
 
-
-export default function InputContent() {
+export default function InputContent({ posts, setPosts }: { posts: any; setPosts: any }) {
     const [expanded, setExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingText, setLoadingText] = useState('');
     const [currentLanguage, setCurrentLanguage] = useState('en');
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const TRANSCRIBE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_TRANSCRIBE_API_TOKEN;
     const TRANSLATE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_TRANSLATE_API_TOKEN;
-    
-    console.log("TRANSLATE_API_TOKEN", TRANSLATE_API_TOKEN);
+    const STORAGE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_STORAGE_API_TOKEN;
 
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -98,6 +98,43 @@ export default function InputContent() {
         }
     }
 
+    const handleCreatePost = async () => {
+        try {
+            setLoadingText('Creating post...');
+            setLoading(true);
+            const i = await fetch(selectedImage!);
+            const blobImg = await i.blob();
+            
+            const response = await axios.post("https://api.jigsawstack.com/v1/store/file", 
+                blobImg, 
+                {
+                    headers: {
+                    'Content-Type': "image/png",
+                    "x-api-key": STORAGE_API_TOKEN
+                    },
+                }
+            );
+            const { data } = response;
+            const { url, key } = data;
+            setPosts([...posts, {
+                date: new Date().toLocaleDateString(),
+                content: textAreaRef?.current?.value ?? '',
+                imageSrc: url,
+                imgContent: selectedImage,
+                imgKey: key
+            }]);
+        } catch (e) {
+            console.log("e", e);
+        } finally {
+            setLoadingText('');
+            setLoading(false);
+            if(textAreaRef.current) {
+                textAreaRef.current.value = '';
+            }
+            setSelectedImage(null);
+        }
+    };
+
     return (
         <>
         <Flex justifyContent="center" alignItems="center" flexDir="column">
@@ -110,58 +147,49 @@ export default function InputContent() {
                 onBlur={() => setExpanded(false)}
                 ref={textAreaRef}
             />
-                <Flex gap={2}>
-                    <AudioRecorder 
-                        onRecordingComplete={handleTranscrible}
-                        audioTrackConstraints={{
-                            noiseSuppression: true,
-                            echoCancellation: true,
-                        }} 
-                        downloadOnSavePress={false}
-                        downloadFileExtension="webm"
-                    />
-                    <Menu>
-                        <MenuButton> 
-                            <IconButton
-                                aria-label="Search button"
-                                icon={<FaLanguage fontSize={22} color="black" />}
-                                variant="ghost"
-                            />
-                        </MenuButton>
-                        <MenuList>
-                            {
-                                [
-                                    {lang: "Português", acronym: "br"}, 
-                                    {lang: "Inglês", acronym: "en"}, 
-                                    {lang: "Italiano", acronym: "it"},
-                                    {lang: "Alemão", acronym: "de"},
-                                    {lang: "Espanhol", acronym: "es"},
-                                    {lang: "Francês", acronym: "fr"},
-                                    ].map(
-                                    (language: any, index) => (
-                                        <MenuItem key={index} onClick={() => translateTo(language.acronym)}>{language.lang}</MenuItem>
-                                    )
+            <UploadInput selectedImage={selectedImage} setSelectedImage={setSelectedImage} />
+            <Flex gap={2}>
+                <AudioRecorder 
+                    onRecordingComplete={handleTranscrible}
+                    audioTrackConstraints={{
+                        noiseSuppression: true,
+                        echoCancellation: true,
+                    }} 
+                    downloadOnSavePress={false}
+                    downloadFileExtension="webm"
+                />
+                <Menu>
+                    <MenuButton> 
+                        <IconButton
+                            aria-label="Search button"
+                            icon={<FaLanguage fontSize={22} color="black" />}
+                            variant="ghost"
+                        />
+                    </MenuButton>
+                    <MenuList>
+                        {
+                            [
+                                {lang: "Português", acronym: "br"}, 
+                                {lang: "Inglês", acronym: "en"}, 
+                                {lang: "Italiano", acronym: "it"},
+                                {lang: "Alemão", acronym: "de"},
+                                {lang: "Espanhol", acronym: "es"},
+                                {lang: "Francês", acronym: "fr"},
+                                ].map(
+                                (language: any, index) => (
+                                    <MenuItem key={index} onClick={() => translateTo(language.acronym)}>{language.lang}</MenuItem>
                                 )
-                            }
-                        </MenuList>
-                    </Menu>
-                    {/* <IconButton
-                        aria-label="Upload img"
-                        icon={ <FaLanguage fontSize={22} color='black' />}
-                        variant="ghost"
-                        onClick={() => setShowBottomSelect(true)}
-                    /> */}
-                    
-                    {/* <IconButton
-                        aria-label="Upload img"
-                        icon={ <FaFileImage fontSize={14} color='black' />}
-                        variant="ghost"
-                        backgroundColor="#ebebeb"
-                    />
-                    <Button w={20} h={10} colorScheme="blue">
-                        <Text>Publicar</Text>
-                    </Button> */}
-                </Flex>
+                            )
+                        }
+                    </MenuList>
+                </Menu>
+            </Flex>
+            <Button 
+                colorScheme='blue' 
+                mt={6} 
+                isDisabled={textAreaRef?.current?.value === ''}
+                onClick={handleCreatePost}
+                >Publish post</Button>
         </Flex>
         { loading && <FullScreenLoader loadingText={loadingText} /> }
         </>

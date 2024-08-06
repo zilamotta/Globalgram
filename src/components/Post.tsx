@@ -11,25 +11,29 @@ import { FaShare, FaComment, FaHeart, FaRegFileAudio, FaSpinner } from 'react-ic
 import { useState } from 'react';
 import axios from 'axios';
 
-interface PostProps {
+export interface PostProps {
   date: string;
   content: string;
   imageSrc?: string;
+  imgContent?: string;
+  imgKey?: string;
 }
 
-export default function Post ({ date, content, imageSrc }: PostProps) {
+export default function Post ({ date, content, imageSrc, imgContent, imgKey }: PostProps) {
   const [loading, setLoading] = useState(false);
   const [imageDesc, setImageDesc] = useState("");
   const [show, setShow] = useState(false);
 
   const IMG_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_IMG_API_TOKEN;
   const PROMPT_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_PROMPT_API_TOKEN;
+  const STORAGE_API_TOKEN = process.env.REACT_APP_JIGSAWSTACK_STORAGE_API_TOKEN;
 
   const handleDescriptionImage = async () => {
     try {
       setLoading(true);
       const response = await axios.post("https://api.jigsawstack.com/v1/ai/object_detection", {
-        url: imageSrc
+        url: `${imageSrc}?x-api-key=${STORAGE_API_TOKEN}`,
+        key: imgKey
       }, {
         headers: {
           "x-api-key": IMG_API_TOKEN
@@ -87,11 +91,11 @@ export default function Post ({ date, content, imageSrc }: PostProps) {
       p={4}
       mb={4}
     >
-      {imageSrc && (
+      {imgContent && (
         <>
           <Flex flexDir="column" alignItems="flex-end">
             <Image
-              src={imageSrc}
+              src={imgContent}
               alt="Post Image"
               borderRadius="lg"
               mb={4}
